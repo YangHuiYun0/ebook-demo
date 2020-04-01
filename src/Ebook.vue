@@ -18,7 +18,11 @@
       @setFontSize='setFontSize'
       :themeList = 'themeList'
       :defaultTheme = 'defaultTheme'
+      :bookAvailable = 'bookAvailable'
       @setTheme = 'setTheme'
+      @onProgressChange = 'onProgressChange'
+      :navigation = 'navigation'
+      @jumpTo = 'jumpTo'
       ></MenuBar>
   </div>
 </template>
@@ -84,9 +88,30 @@ export default {
         },
       ],
       defaultTheme:0,
+      bookAvailable: false,
+      navigation: {},
     }
   },
   methods: {
+    // 根据链接跳转到指定的方法
+    jumpTo(href) {
+      this.rendition.display(href);
+      this.hideTitleAndMenu();
+    },
+    hideTitleAndMenu() {
+      // 隐藏标题栏和菜单栏
+      this.ifTitleAndMenuShow = false;
+      // 隐藏菜单栏弹出的设置栏
+      this.$refs.MenuBar.hideSetting();
+      this.$refs.MenuBar.hideContent();
+      // 隐藏目录
+    },
+    // 进度条定位方法  progress是进度条的数值
+    onProgressChange(progress) {
+      const percentage = progress / 100;
+      const loaction = percentage > 0 ? this.loactions.cfiFromPercentage(percentage) : 0;
+      this.rendition.display(Location)
+    },
     setTheme(index) {
       this.themes.select(this.themeList[index].name);
       this.defaultTheme = index;
@@ -144,7 +169,17 @@ export default {
       // this.themes.register(name,styles);
       // this.themes.select(name)
       this.registerTheme();
-      this.setTheme(this.defaultTheme)
+      this.setTheme(this.defaultTheme);
+      // 获取location对象
+      // 通过epubjs的钩子函数实现
+      this.book.ready.then(() => {
+        // 获取目录信息
+        this.navigation = this.book.navigation;
+        return this.book.locations.generate();
+      }).then(result => {
+        this.locations = this.book.locations;
+        this.bookAvailable = true;
+      })
     }
   },
   mounted() {
